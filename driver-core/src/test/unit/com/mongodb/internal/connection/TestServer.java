@@ -70,6 +70,11 @@ public class TestServer implements ClusterableServer {
         connectCount++;
     }
 
+    @Override
+    public ConnectionStatistics getConnectionStatistics() {
+        return new ConnectionStatistics(0, 0);
+    }
+
     public int getConnectCount() {
         return connectCount;
     }

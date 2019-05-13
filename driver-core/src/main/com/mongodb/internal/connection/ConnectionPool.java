@@ -35,4 +35,11 @@ interface ConnectionPool extends Closeable {
     void invalidate();
 
     void close();
+
+    /**
+     * Returns the {@link ConnectionStatistics} for this pool.
+     *
+     * @return the {@link ConnectionStatistics} for this pool
+     */
+    ConnectionStatistics getConnectionStatistics();
 }

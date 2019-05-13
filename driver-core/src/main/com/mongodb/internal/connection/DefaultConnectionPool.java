@@ -258,6 +258,11 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
+    @Override
+    public ConnectionStatistics getConnectionStatistics() {
+        return new ConnectionStatistics(0, waitQueueSize.get());
+    }
+
     /**
      * Synchronously prune idle connections and ensure the minimum pool size.
      */

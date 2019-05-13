@@ -41,12 +41,7 @@ import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -336,7 +331,7 @@ abstract class BaseCluster implements Cluster {
     private Server selectRandomServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription) {
         List<ServerDescription> serverDescriptions = serverSelector.select(clusterDescription);
         if (!serverDescriptions.isEmpty()) {
-            return getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
+            return getRandomServerWithSmallestNumberOfClientThreads(new ArrayList<ServerDescription>(serverDescriptions));
         } else {
             return null;
         }
@@ -351,10 +346,12 @@ abstract class BaseCluster implements Cluster {
     }
 
     // gets a random server that still exists in the cluster.  Returns null if there are none.
-    private ClusterableServer getRandomServer(final List<ServerDescription> serverDescriptions) {
-        while (!serverDescriptions.isEmpty()) {
-            int serverPos = getRandom().nextInt(serverDescriptions.size());
-            ClusterableServer server = getServer(serverDescriptions.get(serverPos).getAddress());
+    private ClusterableServer getRandomServerWithSmallestNumberOfClientThreads(final List<ServerDescription> serverDescriptions) {
+        final List<ClusterableServer> servers = toClusterableServer(serverDescriptions);
+        final List<ClusterableServer> serversWithSmallestAmountOfClientThreads = getServersWithSmallestNumberOfClientThreads(servers);
+        while (!serversWithSmallestAmountOfClientThreads.isEmpty()) {
+            final int serverPos = getRandom().nextInt(serversWithSmallestAmountOfClientThreads.size());
+            final ClusterableServer server = serversWithSmallestAmountOfClientThreads.get(serverPos);
             if (server != null) {
                 return server;
             } else {
@@ -362,6 +359,30 @@ abstract class BaseCluster implements Cluster {
             }
         }
         return null;
+    }
+
+    private List<ClusterableServer> getServersWithSmallestNumberOfClientThreads(final List<ClusterableServer> servers) {
+        final List<ClusterableServer> result = new LinkedList<ClusterableServer>();
+        int minAmount = Integer.MAX_VALUE;
+        for (ClusterableServer server : servers) {
+            final int threadCount = server.getConnectionStatistics().countAllThreads();
+            if (threadCount < minAmount) {
+                minAmount = threadCount;
+                result.clear();
+                result.add(server);
+            }  else if (threadCount == minAmount) {
+                result.add(server);
+            }
+        }
+        return result;
+    }
+
+    private List<ClusterableServer> toClusterableServer(final List<ServerDescription> serverDescriptions) {
+        List<ClusterableServer> result = new LinkedList<ClusterableServer>();
+        for (ServerDescription serverDescription : serverDescriptions) {
+            result.add(getServer(serverDescription.getAddress()));
+        }
+        return result;
     }
 
     // it's important that Random instances are created in this way instead of via subclassing ThreadLocal and overriding the

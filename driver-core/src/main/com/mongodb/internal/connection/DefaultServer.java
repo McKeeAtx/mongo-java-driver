@@ -152,6 +152,11 @@ class DefaultServer implements ClusterableServer {
         serverMonitor.connect();
     }
 
+    @Override
+    public ConnectionStatistics getConnectionStatistics() {
+        return connectionPool.getConnectionStatistics();
+    }
+
     ConnectionPool getConnectionPool() {
         return connectionPool;
     }

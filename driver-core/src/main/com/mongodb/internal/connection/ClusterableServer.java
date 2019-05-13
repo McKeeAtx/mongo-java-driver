@@ -46,4 +46,11 @@ interface ClusterableServer extends Server {
      * Attempt to connect to the server.
      */
     void connect();
+
+    /**
+     * Returns the {@link ConnectionStatistics} for this server.
+     *
+     * @return the {@link ConnectionStatistics} for this server
+     */
+    ConnectionStatistics getConnectionStatistics();
 }

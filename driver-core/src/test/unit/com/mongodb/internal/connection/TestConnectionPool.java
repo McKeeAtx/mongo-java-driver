@@ -138,4 +138,9 @@ public class TestConnectionPool implements ConnectionPool {
     @Override
     public void close() {
     }
+
+    @Override
+    public ConnectionStatistics getConnectionStatistics() {
+        return new ConnectionStatistics(0, 0);
+    }
 }
